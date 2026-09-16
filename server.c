@@ -5,7 +5,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h> // standard libraries
+#include <stdlib.h> /* standard libraries */
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
@@ -85,6 +85,8 @@ int client_accept(int server_fd, struct sockaddr_in *address, struct client *id,
       for (j = 0; j < max_client; j++) {
 	if (id[j].username && strcmp(buffer, id[j].username) == 0) {
 	  fprintf(stderr, ANSI_RED "Username '%s' already taken, connection refused\n" ANSI_RESET, buffer);
+	  snprintf(buffer, sizeof(buffer), "This username is already taken, please retry later");
+	  SSL_write(ssl, buffer, strlen(buffer));
 	  SSL_free(ssl);
 	  close(fd);
 	  return 0;
@@ -95,7 +97,7 @@ int client_accept(int server_fd, struct sockaddr_in *address, struct client *id,
 
       id[i].username = strdup(buffer);
 			
-      fprintf(stdout, "New client '%s' connected\n", id[i].username);
+      fprintf(stdout, ANSI_YELLOW "New client '%s' connected\n" ANSI_RESET, id[i].username);
 			
       snprintf(buffer, sizeof(buffer), "Hello %s, this is MCP.", id[i].username);
       SSL_write(ssl, buffer, strlen(buffer));
@@ -235,19 +237,22 @@ int client_handle_command(struct client *client, struct client *id, char *buffer
 }
 
 int client_handle_private_message(struct client *client, char *buffer, struct client *id, int max_client) {
+  int i;
+  const char ch = ' ';
   char *user;
   char *msg;
-  int i;
   char *private = "[Private] "; 
   char *space = ": ";
   char *err_user = "Error: this user does not exist, please retry later";
+  char *err_priv_msg = "Invalid message";
   char message[2048];
 
   *message = '\0';
     
-  user = buffer + 1;
-  msg = memchr(buffer, ' ', strlen(buffer));
+  user = buffer + 1; 
+  msg = memchr(buffer, ch, strlen(buffer));
   if (!msg) {
+    SSL_write(client->ssl, err_priv_msg, strlen(err_priv_msg));
     printf("Invalid message\n");
     return -EINVAL;
   }
@@ -264,8 +269,8 @@ int client_handle_private_message(struct client *client, char *buffer, struct cl
       *message = '\0';
       return 0;
     } else {
-      SSL_write(id[i].ssl, err_user, strlen(err_user));
-      printf("User %s not found\n", user);
+      SSL_write(client->ssl, err_user, strlen(err_user));
+      printf("User '%s' not found\n", user);
       return -EINVAL;
     }
   }
@@ -279,6 +284,8 @@ int client_handle_message(struct client *client, char *buffer, struct client *id
   char message[2048];
 
   *message = '\0';
+
+  printf("%s: %s\n", client->username, buffer);
 	
   strcat(message, client->username);
   strcat(message, space);
