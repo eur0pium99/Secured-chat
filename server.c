@@ -87,8 +87,15 @@ int client_accept(int server_fd, struct sockaddr_in *address, struct client *id,
 	  fprintf(stderr, ANSI_RED "Username '%s' already taken, connection refused\n" ANSI_RESET, buffer);
 	  snprintf(buffer, sizeof(buffer), "This username is already taken, please retry later");
 	  SSL_write(ssl, buffer, strlen(buffer));
-	  SSL_free(ssl);
-	  close(fd);
+
+	  close(id[i].fd);
+	  id[i].fd = -1;
+
+	  free(id[i].username);
+	  id[i].username = NULL;
+		
+	  SSL_free(id[i].ssl);
+	  id[i].ssl = NULL;
 	  return 0;
 	}
       }
@@ -381,7 +388,7 @@ int main(int argc, char *argv[]) {
   }
 	
   /* Create server socket */
-  ret = socket(AF_INET, SOCK_STREAM, 0); // create TCP socket
+  ret = socket(AF_INET, SOCK_STREAM, 0);
   if (ret == -1) {
     perror(ANSI_RED "Socket creation failed" ANSI_RESET);
     exit(EXIT_FAILURE);
@@ -394,7 +401,7 @@ int main(int argc, char *argv[]) {
     perror(ANSI_YELLOW "setsockopt(SO_REUSEADDR) failed" ANSI_RESET);
   }
 	
-  address.sin_family = AF_INET;		  // struct to define type,
+  address.sin_family = AF_INET;		 // struct to define type,
   address.sin_addr.s_addr = INADDR_ANY; // address and port to use
   address.sin_port = htons(port);
 	
