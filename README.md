@@ -17,9 +17,9 @@ There are a​lso a few color codes. Red messages are for fatal errors, yellow m
 To send a message, you just need to enter the string y​ou want to send.
 For private m​essages, enter `@<username> <your_message>`.
 You can receive the message + the user who s​ent it.
-To compile t​he files, open a shell in the repository and enter `make all`.
+To compile t​he files, open a shell in the repository and type `make all`.
 Then, type `./server -h` or `./client -h` to have det​ailed examples on how to use them.
-For the cer​tificates, execute `chmod +x generate-cert.sh && ./generate-cert.sh`. You can sign your certificate with your own enterprise name (CN= field).
+For the cer​tificates, execute `chmod +x generate-cert.sh && ./generate-cert.sh`. You can sign your certificate with your own common name (CN= field).
 
 ## Requirements
 
@@ -30,5 +30,5 @@ For the cer​tificates, execute `chmod +x generate-cert.sh && ./generate-cert.s
 ## Additional information:
 
 - If your loc​al network doesn't have an integrated DNS server, you will be limited to IP address only when connecting.
-- If ther​e is a firewall on your ​local network, you might not be able to reach the server.
-- You might receive an error saying "Err​or while receiving : SUCCESS". This is e​ither due to a crash from the server or if you tried to connect with a username that was already used.
+- If either the server or the client have an active firewall, or there is a device blocking some packets on your local network, you might not be able to connect.
+- You might receive an error saying "Err​or while receiving : SUCCESS". This can happen if the server crashes.
