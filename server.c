@@ -250,11 +250,8 @@ int client_handle_private_message(struct client *client, char *buffer, struct cl
   char *err_user = "Error: this user does not exist, please retry later";
   char *err_priv_msg = "Invalid message";
   char message[2048];
-  char *buffer_copy;
   
   *message = '\0';
-
-  buffer_copy = strdup(buffer + 1);
   
   char *msg_content = memchr(buffer, ' ', strlen(buffer));
   char *user = strndup(buffer + 1, msg_content - buffer - 1);
@@ -276,16 +273,12 @@ int client_handle_private_message(struct client *client, char *buffer, struct cl
       SSL_write(id[i].ssl, message, strlen(message));
       *message = '\0';
       
-      free(buffer_copy);
-      
       return 0;
     }
   }
 
   SSL_write(client->ssl, err_user, strlen(err_user));
   printf("User '%s' not found\n", user);
-  
-  free(buffer_copy);
   
   return -EINVAL;
 }
