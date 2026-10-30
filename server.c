@@ -67,15 +67,15 @@ int client_accept(int server_fd, struct sockaddr_in *address, struct client *id,
     if (id[i].fd == -1) {
       ssl = SSL_new(ctx);
       if (!ssl) {
-	return -ENOMEM;
+        return -ENOMEM;
       }
       SSL_set_fd(ssl, fd);
       ret = SSL_accept(ssl);
       if (ret != 1) {
-	fprintf(stderr, ANSI_YELLOW "SSL connection could not be established\n" ANSI_RESET);
-	SSL_free(ssl);
-	close(fd);
-	return -EIO;
+        fprintf(stderr, ANSI_YELLOW "SSL connection could not be established\n" ANSI_RESET);
+        SSL_free(ssl);
+        close(fd);
+        return -EIO;
       }
 		
       id[i].fd = fd;
@@ -83,21 +83,21 @@ int client_accept(int server_fd, struct sockaddr_in *address, struct client *id,
       SSL_read(ssl, buffer, sizeof(buffer) - 1);
 
       for (j = 0; j < max_client; j++) {
-	if (id[j].username && strcmp(buffer, id[j].username) == 0) {
-	  fprintf(stderr, ANSI_RED "Username '%s' already taken, connection refused\n" ANSI_RESET, buffer);
-	  snprintf(buffer, sizeof(buffer), "This username is already taken, please retry later");
-	  SSL_write(ssl, buffer, strlen(buffer));
+        if (id[j].username && strcmp(buffer, id[j].username) == 0) {
+          fprintf(stderr, ANSI_RED "Username '%s' already taken, connection refused\n" ANSI_RESET, buffer);
+          snprintf(buffer, sizeof(buffer), "<!> This username is already taken, please retry later");
+          SSL_write(ssl, buffer, strlen(buffer));
 
-	  close(id[i].fd);
-	  id[i].fd = -1;
+          close(id[i].fd);
+          id[i].fd = -1;
 
-	  free(id[i].username);
-	  id[i].username = NULL;
-		
-	  SSL_free(id[i].ssl);
-	  id[i].ssl = NULL;
-	  return 0;
-	}
+          free(id[i].username);
+          id[i].username = NULL;
+         
+          SSL_free(id[i].ssl);
+          id[i].ssl = NULL;
+          return 0;
+        }
       }
 
       id[i].ssl = ssl;
@@ -177,7 +177,7 @@ int client_handle_command_ip(char *msg, int msg_size) {
   ret = 0;
 
  err_fgets:
-  pclose(pipe);
+    pclose(pipe);
 
  err_popen:
   return ret;
@@ -245,44 +245,49 @@ int client_handle_command(struct client *client, struct client *id, char *buffer
 
 int client_handle_private_message(struct client *client, char *buffer, struct client *id, int max_client) {
   int i;
-  const char ch = ' ';
-  char *user;
-  char *msg;
-  char *private = "[Private] "; 
+  char *private = "[Private] ";
   char *space = ": ";
   char *err_user = "Error: this user does not exist, please retry later";
   char *err_priv_msg = "Invalid message";
   char message[2048];
-
+  char *buffer_copy;
+  
   *message = '\0';
-    
-  user = buffer + 1; 
-  msg = memchr(buffer, ch, strlen(buffer));
-  if (!msg) {
+
+  buffer_copy = strdup(buffer + 1);
+  
+  char *msg_content = memchr(buffer, ' ', strlen(buffer));
+  char *user = strndup(buffer + 1, msg_content - buffer - 1);
+  
+  if (!msg_content) {
     SSL_write(client->ssl, err_priv_msg, strlen(err_priv_msg));
-    printf("Invalid message\n");
+    printf("Invalid message from %s\n", user);
     return -EINVAL;
   }
-  msg++;
+  msg_content++;
 
   strcat(message, private);
   strcat(message, client->username);
   strcat(message, space);
-  strcat(message, msg);
+  strcat(message, msg_content);
 
   for (i = 0; i < max_client; i++) {
     if (strncmp(id[i].username, user, strlen(id[i].username)) == 0) {
       SSL_write(id[i].ssl, message, strlen(message));
       *message = '\0';
+      
+      free(buffer_copy);
+      
       return 0;
-    } else {
-      SSL_write(client->ssl, err_user, strlen(err_user));
-      printf("User '%s' not found\n", user);
-      return -EINVAL;
     }
   }
 
-  return 0;
+  SSL_write(client->ssl, err_user, strlen(err_user));
+  printf("User '%s' not found\n", user);
+  
+  free(buffer_copy);
+  
+  return -EINVAL;
 }
 
 int client_handle_message(struct client *client, char *buffer, struct client *id, int max_client) {
@@ -431,9 +436,9 @@ int main(int argc, char *argv[]) {
 	    
     for (i = 0; i < MAX_CLIENT; i++) {
       if (id[i].fd != -1) {
-	fds[fd_num].fd = id[i].fd;
-	fds[fd_num].events = POLLIN;
-	fd_num++;
+        fds[fd_num].fd = id[i].fd;
+        fds[fd_num].events = POLLIN;
+        fd_num++;
       }
     }
 		
@@ -445,21 +450,21 @@ int main(int argc, char *argv[]) {
 
     for (i = 0; i < fd_num; i++) {
       if (fds[i].revents & POLLIN) {
-	if (i == 0) {
-	  /* The server socket is signaled, process incoming connection */
-	  client_accept(server_fd, &address, id, MAX_CLIENT, ctx);
-	} else {
-	  /* Client socket, process message */
-	  struct client *client = NULL;
+        if (i == 0) {
+          /* The server socket is signaled, process incoming connection */
+          client_accept(server_fd, &address, id, MAX_CLIENT, ctx);
+        } else {
+          /* Client socket, process message */
+          struct client *client = NULL;
 
-	  for (j = 0; j < MAX_CLIENT; j++) {
-	    if (fds[i].fd == id[j].fd) {
-	      client = &id[j];
-	    }
-	  }
+          for (j = 0; j < MAX_CLIENT; j++) {
+            if (fds[i].fd == id[j].fd) {
+              client = &id[j];
+            }
+          }
 
-	  client_handle(client, id, MAX_CLIENT);
-	}
+          client_handle(client, id, MAX_CLIENT);
+        }
       }
     }
   }

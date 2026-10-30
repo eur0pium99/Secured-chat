@@ -31,4 +31,4 @@ For the cer​tificates, execute `chmod +x generate-cert.sh && ./generate-cert.s
 
 - If your loc​al network doesn't have an integrated DNS server, you will be limited to IP address only when connecting.
 - If either the server or the client have an active firewall, or there is a device blocking some packets on your local network, you might not be able to connect.
-- You might receive an error saying "Err​or while receiving : SUCCESS". This can happen if the server crashes.
+- You might receive an error saying "Err​or while receiving : SUCCESS". If this happens, try to reconnect to the server.
