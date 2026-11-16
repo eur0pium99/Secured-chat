@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
   int fd_num;
   int ret;
 
-  port = 1234; // default port
+  port = 1234; /* default port */
 
   while ((opt = getopt(argc, argv, "p:h")) != -1) {
     switch(opt) {
@@ -399,8 +399,8 @@ int main(int argc, char *argv[]) {
     perror(ANSI_YELLOW "setsockopt(SO_REUSEADDR) failed" ANSI_RESET);
   }
 	
-  address.sin_family = AF_INET;		 // struct to define type,
-  address.sin_addr.s_addr = INADDR_ANY; // address and port to use
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = INADDR_ANY; /* host on all interfaces */
   address.sin_port = htons(port);
 	
   if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) == -1) {
@@ -444,10 +444,10 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < fd_num; i++) {
       if (fds[i].revents & POLLIN) {
         if (i == 0) {
-          /* The server socket is signaled, process incoming connection */
+          /* process incoming connection */
           client_accept(server_fd, &address, id, MAX_CLIENT, ctx);
         } else {
-          /* Client socket, process message */
+          /* process message */
           struct client *client = NULL;
 
           for (j = 0; j < MAX_CLIENT; j++) {
